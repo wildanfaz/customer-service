@@ -1,38 +1,64 @@
 package routers
 
 import (
-	"fmt"
-
-	"github.com/labstack/echo/v4"
-	"github.com/wildanfaz/go-template/configs"
-	"github.com/wildanfaz/go-template/internal/constants"
-	"github.com/wildanfaz/go-template/internal/pkg"
-	"github.com/wildanfaz/go-template/internal/repositories"
-	books_router "github.com/wildanfaz/go-template/internal/routers/books-router"
-	"github.com/wildanfaz/go-template/internal/services/books"
-	"github.com/wildanfaz/go-template/internal/services/health"
+	"github.com/gofiber/fiber/v2"
+	"github.com/wildanfaz/go-market/configs"
+	"github.com/wildanfaz/go-market/internal/middlewares"
+	"github.com/wildanfaz/go-market/internal/pkg"
+	"github.com/wildanfaz/go-market/internal/repositories"
+	"github.com/wildanfaz/go-market/internal/services/carts"
+	"github.com/wildanfaz/go-market/internal/services/payments"
+	"github.com/wildanfaz/go-market/internal/services/products"
+	"github.com/wildanfaz/go-market/internal/services/users"
 )
 
-func InitEchoRouter() {
+func InitRouter() {
 	// configs
 	config := configs.InitConfig()
-	dbMySql := configs.InitMySql(config.DatabaseDSN)
+	db := configs.InitMySql(config.DatabaseDSN)
 
 	// pkg
 	log := pkg.InitLogger()
 
 	// repositories
-	booksRepo := repositories.NewBooksRepository(dbMySql)
+	usersRepo := repositories.NewUsersRepository(db)
+	productsRepo := repositories.NewProductsRepository(db)
+	cartsRepo := repositories.NewCartsRepository(db)
+	paymentsRepo := repositories.NewPaymentsRepository(db)
 
 	// services
-	_ = books.New(booksRepo, log, config)
+	usersServices := users.New(log, usersRepo, config)
+	productsServices := products.New(log, productsRepo, config)
+	cartsServices := carts.New(log, cartsRepo)
+	paymentsServices := payments.New(log, paymentsRepo)
 
-	e := echo.New()
+	// middlewares
+	auth := middlewares.Auth(log, config, usersRepo)
 
-	apiV1 := e.Group("/api/v1")
-	apiV1.GET("/health", health.HealthCheck)
+	app := fiber.New()
 
-	books_router.BooksRouter(apiV1)
+	apiV1 := app.Group("/api/v1")
 
-	e.Logger.Fatal(e.Start(config.AppPort))
+	// users
+	usersV1 := apiV1.Group("/users")
+	usersV1.Post("/register", usersServices.Register)
+	usersV1.Post("/login", usersServices.Login)
+
+	apiV1.Use(auth)
+
+	// products
+	productsV1 := apiV1.Group("/products")
+	productsV1.Get("/list-products", productsServices.ListProducts)
+
+	// carts
+	cartsV1 := apiV1.Group("/carts")
+	cartsV1.Post("/add-to-cart", cartsServices.AddToCart)
+	cartsV1.Get("/list-in-cart", cartsServices.ListInCart)
+	cartsV1.Delete("/delete-from-cart/:id", cartsServices.DeleteFromCart)
+
+	// payments
+	paymentsV1 := apiV1.Group("/payments")
+	paymentsV1.Post("/pay", paymentsServices.Pay)
+
+	app.Listen(config.AppPort)
 }

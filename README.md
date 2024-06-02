@@ -1,12 +1,13 @@
-# Go Template
+# Go Market
 
-Simple golang project template
+The go-market built in Golang facilitates interactions between customer and product owner. It provides essential functionalities such as user authentication, products browsing, and purchasing.
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
 - [Commands](#commands)
+- [Documentations](#documentations)
 
 ## Installation
 
@@ -36,13 +37,19 @@ Simple golang project template
 3. Clone the repository
 
     ```bash
-    git clone https://github.com/wildanfaz/go-template.git
+    git clone https://github.com/wildanfaz/go-market.git
     ```
 
 4. Change to the project directory
 
     ```bash
-    cd go-template
+    cd go-market
+    ```
+
+5. Copy example-config.json to config.json
+
+    ```bash
+    cp example-config.json config.json
     ```
 
 ## Usage
@@ -50,7 +57,7 @@ Simple golang project template
 1. Start the application using docker
 
     ```bash
-    docker-compose up
+    docker-compose up -d
     ```
 
 ## Commands
@@ -64,3 +71,16 @@ Simple golang project template
     ```bash
     make start
     ```
+
+3. Add user balance (change host.docker.internal in config.json->database.mysql_dsn to localhost)
+    ```bash
+    make add-balance email=${email}
+    ```
+
+## Documentations
+
+1. [Postman](https://documenter.getpostman.com/view/22978251/2sA3QwbUs1)
+
+2. [ERD](https://dbdiagram.io/d/Go-Market-665b2823b65d9338793e99c2)
+
+3. [Docker](https://hub.docker.com/repository/docker/muhamadwildanfaz/go-market)
